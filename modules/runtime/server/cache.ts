@@ -1,5 +1,6 @@
 import process from 'node:process'
 import type { CachedFetchResult } from '#shared/utils/fetch-cache-config'
+import { parsePackageSpecifier } from '#shared/utils/parse-package-param'
 import { createFetch } from 'ofetch'
 
 /**
@@ -65,42 +66,6 @@ function getFixturePath(type: FixtureType, name: string): string {
   return `${dir}:${filename.replace(/\//g, ':')}`
 }
 
-/**
- * Parse a scoped package name with optional version.
- * Handles formats like: @scope/name, @scope/name@version, name, name@version
- */
-function parseScopedPackageWithVersion(input: string): { name: string; version?: string } {
-  if (input.startsWith('@')) {
-    // Scoped package: @scope/name or @scope/name@version
-    const slashIndex = input.indexOf('/')
-    if (slashIndex === -1) {
-      // Invalid format like just "@scope"
-      return { name: input }
-    }
-    const afterSlash = input.slice(slashIndex + 1)
-    const atIndex = afterSlash.indexOf('@')
-    if (atIndex === -1) {
-      // @scope/name (no version)
-      return { name: input }
-    }
-    // @scope/name@version
-    return {
-      name: input.slice(0, slashIndex + 1 + atIndex),
-      version: afterSlash.slice(atIndex + 1),
-    }
-  }
-
-  // Unscoped package: name or name@version
-  const atIndex = input.indexOf('@')
-  if (atIndex === -1) {
-    return { name: input }
-  }
-  return {
-    name: input.slice(0, atIndex),
-    version: input.slice(atIndex + 1),
-  }
-}
-
 function getMockForUrl(url: string): MockResult | null {
   const urlObj = URL.parse(url)
   if (!urlObj) return null
@@ -132,6 +97,56 @@ function getMockForUrl(url: string): MockResult | null {
           size: 12345,
           gzip: 4567,
           dependencyCount: 3,
+        },
+      }
+    }
+  }
+
+  // npms.io API - return mock package score data
+  if (host === 'api.npms.io') {
+    const packageMatch = decodeURIComponent(pathname).match(/^\/v2\/package\/(.+)$/)
+    if (packageMatch?.[1]) {
+      return {
+        data: {
+          analyzedAt: new Date().toISOString(),
+          collected: {
+            metadata: { name: packageMatch[1] },
+          },
+          score: {
+            final: 0.75,
+            detail: {
+              quality: 0.8,
+              popularity: 0.7,
+              maintenance: 0.75,
+            },
+          },
+        },
+      }
+    }
+  }
+
+  // jsdelivr CDN - return 404 for README files, etc.
+  if (host === 'cdn.jsdelivr.net') {
+    // Return null data which will cause a 404 - README files are optional
+    return { data: null }
+  }
+
+  // jsdelivr data API - return mock file listing
+  if (host === 'data.jsdelivr.com') {
+    const packageMatch = decodeURIComponent(pathname).match(/^\/v1\/packages\/npm\/(.+)$/)
+    if (packageMatch?.[1]) {
+      const pkgWithVersion = packageMatch[1]
+      const parsed = parsePackageSpecifier(pkgWithVersion)
+      return {
+        data: {
+          type: 'npm',
+          name: parsed.name,
+          version: parsed.version || 'latest',
+          files: [
+            { name: 'package.json', hash: 'abc123', size: 1000 },
+            { name: 'index.js', hash: 'def456', size: 500 },
+            { name: 'README.md', hash: 'ghi789', size: 2000 },
+          ],
         },
       }
     }
