@@ -1,3 +1,8 @@
+import type { DocsResponse } from '#shared/types'
+import { assertValidPackageName } from '#shared/utils/npm'
+import { parsePackageParam } from '#shared/utils/parse-package-param'
+import { generateDocsWithDeno, getEntrypoints } from '#server/utils/docs'
+
 export default defineCachedEventHandler(
   async event => {
     const pkgParam = getRouterParam(event, 'pkg')
@@ -6,7 +11,7 @@ export default defineCachedEventHandler(
       throw createError({ statusCode: 404, message: 'Package name is required' })
     }
 
-    const { packageName, version } = parsePackageParam(pkgParam)
+    const { packageName, version, rest } = parsePackageParam(pkgParam)
 
     if (!packageName) {
       // TODO: throwing 404 rather than 400 as it's cacheable
@@ -19,9 +24,30 @@ export default defineCachedEventHandler(
       throw createError({ statusCode: 404, message: 'Package version is required' })
     }
 
+    // Extract entrypoint from remaining path segments (e.g., ["router.js"] -> "router.js")
+    const entrypoint = rest.length > 0 ? rest.join('/') : undefined
+
+    // Discover available entrypoints (null for single-entrypoint packages)
+    const entrypoints = await getEntrypoints(packageName, version)
+    const entrypointFields = entrypoints ? { entrypoints, entrypoint } : {}
+
+    // If multi-entrypoint but no specific entrypoint requested, return early
+    // with the entrypoints list so the client can redirect to the first one
+    if (entrypoints && !entrypoint) {
+      return {
+        package: packageName,
+        version,
+        html: '',
+        toc: null,
+        status: 'ok',
+        entrypoints,
+        entrypoint: entrypoints[0],
+      } satisfies DocsResponse
+    }
+
     let generated
     try {
-      generated = await generateDocsWithDeno(packageName, version)
+      generated = await generateDocsWithDeno(packageName, version, entrypoint)
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error(`Doc generation failed for ${packageName}@${version}:`, error)
@@ -32,6 +58,7 @@ export default defineCachedEventHandler(
         toc: null,
         status: 'error',
         message: 'Failed to generate documentation. Please try again later.',
+        ...entrypointFields,
       } satisfies DocsResponse
     }
 
@@ -43,6 +70,7 @@ export default defineCachedEventHandler(
         toc: null,
         status: 'missing',
         message: 'Docs are not available for this package. It may not have TypeScript types.',
+        ...entrypointFields,
       } satisfies DocsResponse
     }
 
@@ -52,6 +80,7 @@ export default defineCachedEventHandler(
       html: generated.html,
       toc: generated.toc,
       status: 'ok',
+      ...entrypointFields,
     } satisfies DocsResponse
   },
   {
@@ -59,7 +88,7 @@ export default defineCachedEventHandler(
     swr: true,
     getKey: event => {
       const pkg = getRouterParam(event, 'pkg') ?? ''
-      return `docs:v2:${pkg}`
+      return `docs:v3:${pkg}`
     },
   },
 )

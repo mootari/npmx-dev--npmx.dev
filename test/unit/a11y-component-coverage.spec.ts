@@ -53,6 +53,7 @@ const SKIPPED_COMPONENTS: Record<string, string> = {
   'Button/Group.vue': "Wrapper component, tests wouldn't make much sense here",
   'Translation/StatusByFile.unused.vue': 'Unused component, might be needed in the future',
   'ColorScheme/Img.vue': 'Image component, basic ui',
+  'EntrypointSelector.vue': 'Simple native <select> wrapper - minimal a11y surface',
 }
 
 function normalizeComponentPath(filePath: string): string {

@@ -20,17 +20,26 @@ const parsedRoute = computed(() => {
     return {
       packageName: segments.join('/'),
       version: null as string | null,
+      entrypoint: null as string | null,
     }
   }
 
+  // Version is the segment right after "v"
+  const version = segments[vIndex + 1]!
+  // Everything after the version is the entrypoint path (e.g., "router.js")
+  const entrypointSegments = segments.slice(vIndex + 2)
+  const entrypoint = entrypointSegments.length > 0 ? entrypointSegments.join('/') : null
+
   return {
     packageName: segments.slice(0, vIndex).join('/'),
-    version: segments.slice(vIndex + 1).join('/'),
+    version,
+    entrypoint,
   }
 })
 
 const packageName = computed(() => parsedRoute.value.packageName)
 const requestedVersion = computed(() => parsedRoute.value.version)
+const entrypoint = computed(() => parsedRoute.value.entrypoint)
 
 // Validate package name on server-side for early error detection
 if (import.meta.server && packageName.value) {
@@ -90,7 +99,8 @@ useCommandPalettePackageCommands(commandPalettePackageContext)
 
 const docsUrl = computed(() => {
   if (!packageName.value || !resolvedVersion.value) return null
-  return `/api/registry/docs/${packageName.value}/v/${resolvedVersion.value}`
+  const base = `/api/registry/docs/${packageName.value}/v/${resolvedVersion.value}`
+  return entrypoint.value ? `${base}/${entrypoint.value}` : base
 })
 
 const shouldFetch = computed(() => !!docsUrl.value)
@@ -119,9 +129,10 @@ const latestVersionDetailed = computed(() => {
   return pkg.value.versions[latestTag] ?? null
 })
 
-const versionUrlPattern = computed(
-  () => `/package-docs/${pkg.value?.name || packageName.value}/v/{version}`,
-)
+const versionUrlPattern = computed(() => {
+  const base = `/package-docs/${pkg.value?.name || packageName.value}/v/{version}`
+  return entrypoint.value ? `${base}/${entrypoint.value}` : base
+})
 
 useCommandPaletteVersionCommands(commandPalettePackageContext, versionUrlPattern)
 
@@ -159,6 +170,27 @@ const stickyStyle = computed(() => {
     '--combined-header-height': `${56 + (packageHeaderHeight.value || 44)}px`,
   }
 })
+
+// Multi-entrypoint support
+const entrypoints = computed(() => docsData.value?.entrypoints ?? null)
+const currentEntrypoint = computed(() => docsData.value?.entrypoint ?? entrypoint.value ?? '')
+
+// Redirect to first entrypoint for multi-entrypoint packages
+watch(docsData, data => {
+  if (data?.entrypoints?.length && !entrypoint.value && resolvedVersion.value) {
+    const firstEntrypoint = data.entrypoints[0]!
+    const pathSegments = [
+      ...packageName.value.split('/'),
+      'v',
+      resolvedVersion.value,
+      ...firstEntrypoint.split('/'),
+    ]
+    router.replace({
+      name: 'docs',
+      params: { path: pathSegments as [string, ...string[]] },
+    })
+  }
+})
 </script>
 
 <template>
@@ -171,6 +203,18 @@ const stickyStyle = computed(() => {
       :version-url-pattern="versionUrlPattern"
       page="docs"
     />
+
+    <div
+      v-if="entrypoints && currentEntrypoint && resolvedVersion"
+      class="container py-2 border-b border-border"
+    >
+      <EntrypointSelector
+        :package-name="packageName"
+        :version="resolvedVersion"
+        :current-entrypoint="currentEntrypoint"
+        :entrypoints="entrypoints"
+      />
+    </div>
 
     <div class="flex" dir="ltr">
       <!-- Sidebar TOC -->

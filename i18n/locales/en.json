@@ -448,7 +448,8 @@
       "page_title_name": "{name} docs - npmx",
       "page_title_version": "{name} docs - npmx",
       "og_title": "{name} - Docs",
-      "view_package": "View package"
+      "view_package": "View package",
+      "select_entrypoint": "Select entrypoint"
     },
     "get_started": {
       "title": "Get started",

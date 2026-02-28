@@ -1350,6 +1350,9 @@
             },
             "view_package": {
               "type": "string"
+            },
+            "select_entrypoint": {
+              "type": "string"
             }
           },
           "additionalProperties": false

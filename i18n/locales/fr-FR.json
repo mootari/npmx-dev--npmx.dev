@@ -446,7 +446,8 @@
       "page_title_name": "Documentation {name} - npmx",
       "page_title_version": "Documentation {name} - npmx",
       "og_title": "{name} - Documentation",
-      "view_package": "Voir le paquet"
+      "view_package": "Voir le paquet",
+      "select_entrypoint": "Sélectionner le point d'entrée"
     },
     "get_started": {
       "title": "Commencer",
