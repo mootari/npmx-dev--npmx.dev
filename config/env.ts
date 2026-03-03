@@ -3,7 +3,9 @@
 import Git from 'simple-git'
 import * as process from 'node:process'
 
-export { version } from '../package.json'
+import { version as packageVersion } from '../package.json'
+
+export { packageVersion as version }
 
 /**
  * Environment variable `PULL_REQUEST` provided by Netlify.
@@ -41,14 +43,16 @@ export const gitBranch = process.env.BRANCH || process.env.VERCEL_GIT_COMMIT_REF
 /**
  * Whether this is the canary environment (main.npmx.dev).
  *
- * Detected via the custom Vercel environment (`VERCEL_ENV === 'canary'`),
- * or as a fallback, a production deploy from the `main` branch.
+ * Detected as any non-PR Vercel deploy from the `main` branch
+ * (which may receive `VERCEL_ENV === 'production'` or `'preview'`
+ * depending on the project's production branch configuration).
  *
  * @see {@link https://vercel.com/docs/environment-variables/system-environment-variables#VERCEL_ENV}
  */
 export const isCanary =
-  process.env.VERCEL_ENV === 'canary' ||
-  (process.env.VERCEL_ENV === 'production' && gitBranch === 'main')
+  (process.env.VERCEL_ENV === 'production' || process.env.VERCEL_ENV === 'preview') &&
+  gitBranch === 'main' &&
+  !isPR
 
 /**
  * Environment variable `CONTEXT` provided by Netlify.
@@ -56,7 +60,7 @@ export const isCanary =
  * @see {@link https://docs.netlify.com/build/configure-builds/environment-variables/#build-metadata}
  *
  * Environment variable `VERCEL_ENV` provided by Vercel.
- * `production`, `preview`, `development`, or a custom environment name (e.g. `canary`).
+ * `production`, `preview`, or `development`.
  * @see {@link https://vercel.com/docs/environment-variables/system-environment-variables#VERCEL_ENV}
  *
  * Whether this is some sort of preview environment.
@@ -152,12 +156,28 @@ export async function getFileLastUpdated(path: string) {
   }
 }
 
+/**
+ * Resolves the current version from git tags, falling back to `package.json`.
+ *
+ * Uses `git describe --tags --abbrev=0 --match 'v*'` to find the most recent
+ * reachable release tag (e.g. `v0.1.0` -> `0.1.0`).
+ */
+export async function getVersion() {
+  try {
+    const tag = (await git.raw(['describe', '--tags', '--abbrev=0', '--match', 'v*'])).trim()
+    return tag.replace(/^v/, '')
+  } catch {
+    return packageVersion
+  }
+}
+
 export async function getEnv(isDevelopment: boolean) {
-  const { commit, shortCommit, branch } = await getGitInfo()
+  const [{ commit, shortCommit, branch }, version] = await Promise.all([getGitInfo(), getVersion()])
   const env = isDevelopment ? 'dev' : isCanary ? 'canary' : isPreview ? 'preview' : 'release'
   const previewUrl = getPreviewUrl()
   const productionUrl = getProductionUrl()
   return {
+    version,
     commit,
     shortCommit,
     branch,

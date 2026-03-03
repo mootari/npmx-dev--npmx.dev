@@ -27,13 +27,6 @@ describe('isCanary', () => {
     vi.unstubAllEnvs()
   })
 
-  it('returns true when VERCEL_ENV is "canary"', async () => {
-    vi.stubEnv('VERCEL_ENV', 'canary')
-    const { isCanary } = await import('../../../config/env')
-
-    expect(isCanary).toBe(true)
-  })
-
   it('returns true when VERCEL_ENV is "production" and branch is "main"', async () => {
     vi.stubEnv('VERCEL_ENV', 'production')
     vi.stubEnv('VERCEL_GIT_COMMIT_REF', 'main')
@@ -42,9 +35,26 @@ describe('isCanary', () => {
     expect(isCanary).toBe(true)
   })
 
+  it('returns true when VERCEL_ENV is "preview" and branch is "main" (non-PR)', async () => {
+    vi.stubEnv('VERCEL_ENV', 'preview')
+    vi.stubEnv('VERCEL_GIT_COMMIT_REF', 'main')
+    const { isCanary } = await import('../../../config/env')
+
+    expect(isCanary).toBe(true)
+  })
+
+  it('returns false when VERCEL_ENV is "preview", branch is "main", but is a PR', async () => {
+    vi.stubEnv('VERCEL_ENV', 'preview')
+    vi.stubEnv('VERCEL_GIT_COMMIT_REF', 'main')
+    vi.stubEnv('VERCEL_GIT_PULL_REQUEST_ID', '123')
+    const { isCanary } = await import('../../../config/env')
+
+    expect(isCanary).toBe(false)
+  })
+
   it.each([
     ['production (non-main branch)', 'production', 'v1.0.0'],
-    ['preview', 'preview', undefined],
+    ['preview (non-main branch)', 'preview', 'feat/foo'],
     ['development', 'development', undefined],
     ['unset', undefined, undefined],
   ])('returns false when VERCEL_ENV is %s', async (_label, value, branch) => {
@@ -78,8 +88,8 @@ describe('getEnv', () => {
     expect(result.env).toBe('dev')
   })
 
-  it('returns "canary" when VERCEL_ENV is "canary"', async () => {
-    vi.stubEnv('VERCEL_ENV', 'canary')
+  it('returns "canary" for Vercel preview deploys from main branch (non-PR)', async () => {
+    vi.stubEnv('VERCEL_ENV', 'preview')
     vi.stubEnv('VERCEL_GIT_COMMIT_REF', 'main')
     const { getEnv } = await import('../../../config/env')
     const result = await getEnv(false)
@@ -87,10 +97,10 @@ describe('getEnv', () => {
     expect(result.env).toBe('canary')
   })
 
-  it('returns "preview" for Vercel preview deploys', async () => {
+  it('returns "preview" for Vercel preview PR deploys', async () => {
     vi.stubEnv('VERCEL_ENV', 'preview')
     vi.stubEnv('VERCEL_GIT_PULL_REQUEST_ID', '123')
-    vi.stubEnv('VERCEL_GIT_COMMIT_REF', 'main')
+    vi.stubEnv('VERCEL_GIT_COMMIT_REF', 'feat/foo')
     const { getEnv } = await import('../../../config/env')
     const result = await getEnv(false)
 
@@ -125,18 +135,9 @@ describe('getEnv', () => {
     expect(result.env).toBe('release')
   })
 
-  it('prioritises "canary" over "preview" when VERCEL_ENV is "canary" and PR is open', async () => {
-    vi.stubEnv('VERCEL_ENV', 'canary')
-    vi.stubEnv('VERCEL_GIT_PULL_REQUEST_ID', '789')
-    vi.stubEnv('VERCEL_GIT_COMMIT_REF', 'main')
-    const { getEnv } = await import('../../../config/env')
-    const result = await getEnv(false)
-
-    expect(result.env).toBe('canary')
-  })
-
   it('prioritises "dev" over "canary" in development mode', async () => {
-    vi.stubEnv('VERCEL_ENV', 'canary')
+    vi.stubEnv('VERCEL_ENV', 'preview')
+    vi.stubEnv('VERCEL_GIT_COMMIT_REF', 'main')
     const { getEnv } = await import('../../../config/env')
     const result = await getEnv(true)
 
@@ -169,7 +170,6 @@ describe('getPreviewUrl', () => {
   it.each([
     ['Netlify production', { CONTEXT: 'production', URL: 'https://prod.example.com' }],
     ['Vercel production', { VERCEL_ENV: 'production', NUXT_ENV_VERCEL_URL: 'prod.example.com' }],
-    ['Vercel canary', { VERCEL_ENV: 'canary', NUXT_ENV_VERCEL_URL: 'main.example.com' }],
   ])('%s environment returns `undefined`', async (_name, envVars) => {
     for (const [key, value] of Object.entries(envVars)) {
       vi.stubEnv(key, value)
@@ -306,5 +306,22 @@ describe('getProductionUrl', () => {
     const { getProductionUrl } = await import('../../../config/env')
 
     expect(getProductionUrl()).toBe(expectedUrl)
+  })
+})
+
+describe('getVersion', () => {
+  it('returns package.json version when no git tags are reachable', async () => {
+    const { getVersion, version } = await import('../../../config/env')
+    const result = await getVersion()
+
+    // In test environments without reachable tags, falls back to package.json
+    expect(result).toBe(version)
+  })
+
+  it('strips the leading "v" prefix from the tag', async () => {
+    const { getVersion } = await import('../../../config/env')
+    const result = await getVersion()
+
+    expect(result).not.toMatch(/^v/)
   })
 })
