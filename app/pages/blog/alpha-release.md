@@ -126,6 +126,12 @@ headline="Read more from the community"
     description: 'It’s more important than ever that companies come together across competitive boundaries to sponsor and support the open ecosystem that lifts all boats.',
   },
   {
+    url: 'https://atproto.com/blog/npmx-alpha-launch',
+    title: 'Supporting the npmx Alpha Launch',
+    authorHandle: 'atproto.com',
+    description: 'AT Protocol explores how the npmx alpha launch showcases open-source communities building quickly on top of atproto.'
+  },
+  {
     url: 'https://johnnyreilly.com/npmx-with-a-little-help-from-my-friends',
     title: 'npmx: With a Little Help From My Friends',
     authorHandle: 'johnnyreilly.com',
