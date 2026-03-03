@@ -34,13 +34,22 @@ describe('isCanary', () => {
     expect(isCanary).toBe(true)
   })
 
+  it('returns true when VERCEL_ENV is "production" and branch is "main"', async () => {
+    vi.stubEnv('VERCEL_ENV', 'production')
+    vi.stubEnv('VERCEL_GIT_COMMIT_REF', 'main')
+    const { isCanary } = await import('../../../config/env')
+
+    expect(isCanary).toBe(true)
+  })
+
   it.each([
-    ['production', 'production'],
-    ['preview', 'preview'],
-    ['development', 'development'],
-    ['unset', undefined],
-  ])('returns false when VERCEL_ENV is %s', async (_label, value) => {
+    ['production (non-main branch)', 'production', 'v1.0.0'],
+    ['preview', 'preview', undefined],
+    ['development', 'development', undefined],
+    ['unset', undefined, undefined],
+  ])('returns false when VERCEL_ENV is %s', async (_label, value, branch) => {
     if (value !== undefined) vi.stubEnv('VERCEL_ENV', value)
+    if (branch !== undefined) vi.stubEnv('VERCEL_GIT_COMMIT_REF', branch)
     const { isCanary } = await import('../../../config/env')
 
     expect(isCanary).toBe(false)
@@ -98,7 +107,16 @@ describe('getEnv', () => {
     expect(result.env).toBe('preview')
   })
 
-  it('returns "release" for Vercel production deploys', async () => {
+  it('returns "canary" for Vercel production deploys from main branch', async () => {
+    vi.stubEnv('VERCEL_ENV', 'production')
+    vi.stubEnv('VERCEL_GIT_COMMIT_REF', 'main')
+    const { getEnv } = await import('../../../config/env')
+    const result = await getEnv(false)
+
+    expect(result.env).toBe('canary')
+  })
+
+  it('returns "release" for Vercel production deploys from non-main branch', async () => {
     vi.stubEnv('VERCEL_ENV', 'production')
     vi.stubEnv('VERCEL_GIT_COMMIT_REF', 'v1.0.0')
     const { getEnv } = await import('../../../config/env')

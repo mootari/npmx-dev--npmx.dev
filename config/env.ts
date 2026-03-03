@@ -39,13 +39,16 @@ export const prNumber = process.env.REVIEW_ID || process.env.VERCEL_GIT_PULL_REQ
 export const gitBranch = process.env.BRANCH || process.env.VERCEL_GIT_COMMIT_REF
 
 /**
- * Environment variable `VERCEL_ENV` provided by Vercel.
- * `production`, `preview`, `development`, or a custom environment name (e.g. `canary`).
- * @see {@link https://vercel.com/docs/environment-variables/system-environment-variables#VERCEL_ENV}
+ * Whether this is the canary environment (main.npmx.dev).
  *
- * Whether this is the canary custom Vercel environment (main.npmx.dev).
+ * Detected via the custom Vercel environment (`VERCEL_ENV === 'canary'`),
+ * or as a fallback, a production deploy from the `main` branch.
+ *
+ * @see {@link https://vercel.com/docs/environment-variables/system-environment-variables#VERCEL_ENV}
  */
-export const isCanary = process.env.VERCEL_ENV === 'canary'
+export const isCanary =
+  process.env.VERCEL_ENV === 'canary' ||
+  (process.env.VERCEL_ENV === 'production' && gitBranch === 'main')
 
 /**
  * Environment variable `CONTEXT` provided by Netlify.
