@@ -136,6 +136,14 @@ export default defineNuxtConfig({
     // never cache
     '/api/auth/**': { isr: false, cache: false },
     '/api/social/**': { isr: false, cache: false },
+    '/api/atproto/bluesky-author-profiles': {
+      isr: {
+        expiration: 60 * 60 /* one hour */,
+        passQuery: true,
+        allowQuery: ['authors'],
+      },
+      cache: { maxAge: 3600 },
+    },
     '/api/opensearch/suggestions': {
       isr: {
         expiration: 60 * 60 * 24 /* one day */,
