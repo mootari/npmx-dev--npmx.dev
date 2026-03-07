@@ -278,130 +278,127 @@ function onBeforeToggleHoverCard(event) {
       </section>
     </article>
 
-    <Transition name="pop">
-      <article
-        ref="panelRef"
-        id="contributor-hovercard"
-        popover="hint"
-        :aria-label="activeContributor?.name || activeContributor?.login"
-        class="contributor-hovercard"
-        @beforetoggle="onBeforeToggleHoverCard"
+    <article
+      id="contributor-hovercard"
+      popover="hint"
+      :aria-label="activeContributor?.name || activeContributor?.login"
+      class="contributor-hovercard"
+      @beforetoggle="onBeforeToggleHoverCard"
+    >
+      <div
+        v-if="activeContributor"
+        class="flex flex-col gap-y-3 w-64 rounded-xl border border-border-subtle bg-bg-elevated p-4 shadow-2xl text-start"
       >
-        <div
-          v-if="activeContributor"
-          class="flex flex-col gap-y-3 w-64 rounded-xl border border-border-subtle bg-bg-elevated p-4 shadow-2xl text-start"
-        >
-          <div class="flex flex-col gap-2 min-w-0">
-            <span class="w-full font-sans font-bold text-fg leading-tight truncate block">
-              {{ activeContributor.name || activeContributor.login }}
-            </span>
-            <div
-              v-if="roleLabels[activeContributor.role]"
-              class="font-mono text-3xs uppercase tracking-wider text-accent font-bold"
-            >
-              {{ roleLabels[activeContributor.role] }}
-            </div>
-            <p
-              v-if="activeContributor.bio"
-              class="font-sans text-xs text-fg-subtle line-clamp-3 leading-relaxed"
-            >
-              "{{ activeContributor.bio }}"
-            </p>
-            <div
-              v-if="activeContributor.companyHTML"
-              class="flex items-center gap-1 font-sans text-2xs text-fg-muted min-w-0"
-            >
-              <div class="i-lucide:building-2 size-3 shrink-0 text-accent/80" aria-hidden="true" />
-              <div
-                class="leading-relaxed break-words min-w-0 [&_a]:(text-accent no-underline hover:underline)"
-                v-html="activeContributor.companyHTML"
-              />
-            </div>
-            <div
-              v-else-if="activeContributor.company"
-              class="flex items-center gap-1 font-sans text-2xs text-fg-muted min-w-0"
-            >
-              <div class="i-lucide:building-2 size-3 shrink-0 text-accent/80" aria-hidden="true" />
-              <span>{{ activeContributor.company }}</span>
-            </div>
+        <div class="flex flex-col gap-2 min-w-0">
+          <span class="w-full font-sans font-bold text-fg leading-tight truncate block">
+            {{ activeContributor.name || activeContributor.login }}
+          </span>
+          <div
+            v-if="roleLabels[activeContributor.role]"
+            class="font-mono text-3xs uppercase tracking-wider text-accent font-bold"
+          >
+            {{ roleLabels[activeContributor.role] }}
           </div>
-
-          <div class="flex flex-col gap-2 text-3xs text-fg-subtle font-sans">
-            <div v-if="activeContributor.location" class="flex items-center gap-1">
-              <div class="i-lucide:map-pin size-3 shrink-0" aria-hidden="true" />
-              <span class="truncate">{{ activeContributor.location }}</span>
-            </div>
-            <a
-              v-if="activeContributor.websiteUrl"
-              :href="activeContributor.websiteUrl"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex items-center gap-1 hover:text-accent transition-colors"
-            >
-              <div class="i-lucide:link size-3 shrink-0" aria-hidden="true" />
-              <span class="truncate">{{
-                activeContributor.websiteUrl.replace(/^https?:\/\//, '')
-              }}</span>
-            </a>
-            <a
-              v-if="activeContributor.twitterUsername"
-              :href="`https://x.com/${activeContributor.twitterUsername}`"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex items-center gap-1 hover:text-accent transition-colors"
-            >
-              <div class="i-simple-icons:x size-2.5 shrink-0" aria-hidden="true" />
-              <span>@{{ activeContributor.twitterUsername }}</span>
-            </a>
-            <a
-              v-if="activeContributor.blueskyHandle"
-              :href="`https://bsky.app/profile/${activeContributor.blueskyHandle}`"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex items-center gap-1 hover:text-accent transition-colors"
-            >
-              <div class="i-simple-icons:bluesky size-2.5 shrink-0" aria-hidden="true" />
-              <span>@{{ activeContributor.blueskyHandle }}</span>
-            </a>
-            <a
-              v-if="activeContributor.mastodonUrl"
-              :href="activeContributor.mastodonUrl"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex items-center gap-1 hover:text-accent transition-colors"
-            >
-              <div class="i-simple-icons:mastodon size-2.5 shrink-0" aria-hidden="true" />
-              <span class="truncate">{{
-                activeContributor.mastodonUrl.replace(/^https?:\/\//, '').replace(/\/@?/, '@')
-              }}</span>
-            </a>
+          <p
+            v-if="activeContributor.bio"
+            class="font-sans text-xs text-fg-subtle line-clamp-3 leading-relaxed"
+          >
+            "{{ activeContributor.bio }}"
+          </p>
+          <div
+            v-if="activeContributor.companyHTML"
+            class="flex items-center gap-1 font-sans text-2xs text-fg-muted min-w-0"
+          >
+            <div class="i-lucide:building-2 size-3 shrink-0 text-accent/80" aria-hidden="true" />
+            <div
+              class="leading-relaxed break-words min-w-0 [&_a]:(text-accent no-underline hover:underline)"
+              v-html="activeContributor.companyHTML"
+            />
           </div>
-
-          <div class="flex items-center justify-between border-t border-border-subtle pt-3">
-            <a
-              :href="activeContributor.html_url"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-3xs text-fg-subtle font-mono hover:text-accent"
-            >
-              @{{ activeContributor.login }}
-            </a>
-
-            <a
-              v-if="activeContributor.sponsors_url"
-              :href="activeContributor.sponsors_url"
-              :aria-label="$t('about.team.sponsor_aria', { name: activeContributor.login })"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex items-center gap-1 rounded border border-purple-700/30 bg-purple-700/5 text-purple-700 dark:border-purple-300/30 dark:bg-purple-300/5 dark:text-purple-300 px-2 py-0.5 text-4xs font-bold uppercase tracking-wider transition-colors hover:bg-purple-700/15 dark:hover:bg-purple-300/15"
-            >
-              <span class="i-lucide:heart size-3" aria-hidden="true" />
-              <span>{{ $t('about.team.sponsor') }}</span>
-            </a>
+          <div
+            v-else-if="activeContributor.company"
+            class="flex items-center gap-1 font-sans text-2xs text-fg-muted min-w-0"
+          >
+            <div class="i-lucide:building-2 size-3 shrink-0 text-accent/80" aria-hidden="true" />
+            <span>{{ activeContributor.company }}</span>
           </div>
         </div>
-      </article>
-    </Transition>
+
+        <div class="flex flex-col gap-2 text-3xs text-fg-subtle font-sans">
+          <div v-if="activeContributor.location" class="flex items-center gap-1">
+            <div class="i-lucide:map-pin size-3 shrink-0" aria-hidden="true" />
+            <span class="truncate">{{ activeContributor.location }}</span>
+          </div>
+          <a
+            v-if="activeContributor.websiteUrl"
+            :href="activeContributor.websiteUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center gap-1 hover:text-accent transition-colors"
+          >
+            <div class="i-lucide:link size-3 shrink-0" aria-hidden="true" />
+            <span class="truncate">{{
+              activeContributor.websiteUrl.replace(/^https?:\/\//, '')
+            }}</span>
+          </a>
+          <a
+            v-if="activeContributor.twitterUsername"
+            :href="`https://x.com/${activeContributor.twitterUsername}`"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center gap-1 hover:text-accent transition-colors"
+          >
+            <div class="i-simple-icons:x size-2.5 shrink-0" aria-hidden="true" />
+            <span>@{{ activeContributor.twitterUsername }}</span>
+          </a>
+          <a
+            v-if="activeContributor.blueskyHandle"
+            :href="`https://bsky.app/profile/${activeContributor.blueskyHandle}`"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center gap-1 hover:text-accent transition-colors"
+          >
+            <div class="i-simple-icons:bluesky size-2.5 shrink-0" aria-hidden="true" />
+            <span>@{{ activeContributor.blueskyHandle }}</span>
+          </a>
+          <a
+            v-if="activeContributor.mastodonUrl"
+            :href="activeContributor.mastodonUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center gap-1 hover:text-accent transition-colors"
+          >
+            <div class="i-simple-icons:mastodon size-2.5 shrink-0" aria-hidden="true" />
+            <span class="truncate">{{
+              activeContributor.mastodonUrl.replace(/^https?:\/\//, '').replace(/\/@?/, '@')
+            }}</span>
+          </a>
+        </div>
+
+        <div class="flex items-center justify-between border-t border-border-subtle pt-3">
+          <a
+            :href="activeContributor.html_url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-3xs text-fg-subtle font-mono hover:text-accent"
+          >
+            @{{ activeContributor.login }}
+          </a>
+
+          <a
+            v-if="activeContributor.sponsors_url"
+            :href="activeContributor.sponsors_url"
+            :aria-label="$t('about.team.sponsor_aria', { name: activeContributor.login })"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center gap-1 rounded border border-purple-700/30 bg-purple-700/5 text-purple-700 dark:border-purple-300/30 dark:bg-purple-300/5 dark:text-purple-300 px-2 py-0.5 text-4xs font-bold uppercase tracking-wider transition-colors hover:bg-purple-700/15 dark:hover:bg-purple-300/15"
+          >
+            <span class="i-lucide:heart size-3" aria-hidden="true" />
+            <span>{{ $t('about.team.sponsor') }}</span>
+          </a>
+        </div>
+      </div>
+    </article>
   </main>
 </template>
 
