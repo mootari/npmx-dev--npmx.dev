@@ -192,9 +192,14 @@ function onBeforeToggleHoverCard(event) {
 
         <!-- Sponsors -->
         <div class="sponsors-logos">
-          <h2 class="text-lg text-fg uppercase tracking-wider mb-4">
+          <h2 id="sponsors" class="text-lg text-fg uppercase tracking-wider mb-4">
             {{ $t('about.sponsors.title') }}
           </h2>
+          <a
+            href="#oss-partners"
+            class="not-focus:sr-only absolute bg-bg-elevated rounded px-2 py-1 z-1"
+            >{{ $t('about.skip_sponsors') }}</a
+          >
           <AboutLogoList
             :list="SPONSORS"
             class="grid grid-cols-2 md:flex md:flex-row md:items-center"
@@ -203,14 +208,17 @@ function onBeforeToggleHoverCard(event) {
 
         <!-- OSS partners -->
         <div>
-          <h2 class="text-lg text-fg uppercase tracking-wider mb-4">
+          <h2 id="oss-partners" class="text-lg text-fg uppercase tracking-wider mb-4">
             {{ $t('about.oss_partners.title') }}
           </h2>
+          <a href="#team" class="not-focus:sr-only absolute bg-bg-elevated rounded px-2 py-1 z-1">{{
+            $t('about.skip_oss_partners')
+          }}</a>
           <AboutLogoList :list="OSS_PARTNERS" class="items-center" />
         </div>
 
         <div>
-          <h2 class="text-lg uppercase tracking-wider mb-4">
+          <h2 id="team" class="text-lg uppercase tracking-wider mb-4">
             {{ $t('about.team.title') }}
           </h2>
           <p class="text-fg-muted leading-relaxed mb-6">
@@ -226,6 +234,11 @@ function onBeforeToggleHoverCard(event) {
                 )
               }}
             </h3>
+            <a
+              href="#get-involved"
+              class="not-focus:sr-only absolute bg-bg-elevated rounded px-2 py-1 z-1"
+              >{{ $t('about.skip_contributors') }}</a
+            >
 
             <div
               v-if="contributorsStatus === 'pending'"
