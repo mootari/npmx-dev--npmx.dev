@@ -257,9 +257,6 @@ function onBeforeToggleHoverCard(event: ToggleEvent & { source: HTMLElement }) {
             <ul
               v-else-if="contributors.length"
               class="flex flex-wrap justify-center gap-2 list-none p-0 overflow-visible"
-              @mouseover="onListMouseEnter"
-              @mouseout="onListMouseLeave"
-              @click="onListClick"
             >
               <li
                 v-for="contributor in contributors"
