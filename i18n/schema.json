@@ -120,6 +120,9 @@
         },
         "open_diff": {
           "type": "string"
+        },
+        "open_timeline": {
+          "type": "string"
         }
       },
       "additionalProperties": false
