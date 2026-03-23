@@ -22,11 +22,7 @@ export interface TimelineResponse {
  * Fetches the full packument server-side, extracts only the fields needed
  * for the timeline view, sorted by publish time (newest first).
  *
- * Query params:
- * - offset: number of versions to skip (default 0)
- * - limit: number of versions to return (default 25)
- *
- * URL patterns:
+ * Examples:
  * - /api/registry/timeline/packageName?offset=0&limit=25
  * - /api/registry/timeline/@scope/packageName?offset=0&limit=25
  */
@@ -37,7 +33,13 @@ export default defineCachedEventHandler(
       throw createError({ statusCode: 404, message: 'Package name is required' })
     }
 
-    const packageName = decodeURIComponent(pkgParam)
+    let packageName: string
+    try {
+      packageName = decodeURIComponent(pkgParam)
+    }
+    catch {
+      throw createError({ statusCode: 400, message: 'Invalid package name encoding' })
+    }
 
     const query = getQuery(event)
     const offset = Math.max(0, Number(query.offset) || 0)
@@ -88,7 +90,9 @@ export default defineCachedEventHandler(
     swr: true,
     getKey: event => {
       const query = getQuery(event)
-      return `timeline:v1:${getRouterParam(event, 'pkg')}:${query.offset ?? 0}:${query.limit ?? DEFAULT_LIMIT}`
+      const offset = Math.max(0, Number(query.offset) || 0)
+      const limit = Math.max(1, Math.min(100, Number(query.limit) || DEFAULT_LIMIT))
+      return `timeline:v1:${getRouterParam(event, 'pkg')}:${offset}:${limit}`
     },
   },
 )
