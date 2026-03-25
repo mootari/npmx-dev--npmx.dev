@@ -34,8 +34,11 @@ const versionUrlPattern = computed(() => {
   return `/package-timeline/${org ? `${org}/` : ''}${name}/v/{version}`
 })
 
-function timelineRoute(ver: string): RouteLocationRaw {
-  return { name: 'timeline', params: { ...route.params, version: ver } }
+function packageRoute(ver: string): RouteLocationRaw {
+  return {
+    name: 'package-version',
+    params: { org: route.params.org, name: route.params.packageName, version: ver },
+  }
 }
 
 // Paginated timeline data from server
@@ -327,7 +330,7 @@ useSeoMeta({
           <!-- Content -->
           <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <LinkBase
-              :to="timelineRoute(entry.version)"
+              :to="packageRoute(entry.version)"
               class="text-sm font-medium"
               :class="entry.version === version ? 'text-accent' : ''"
               dir="ltr"
