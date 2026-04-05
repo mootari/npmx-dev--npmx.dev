@@ -1,10 +1,7 @@
 import { computed, shallowRef, toValue } from 'vue'
 import type { MaybeRefOrGetter } from 'vue'
 
-export function useVisibleItems<T>(
-  items: MaybeRefOrGetter<T[]>,
-  limit: number,
-) {
+export function useVisibleItems<T>(items: MaybeRefOrGetter<T[]>, limit: number) {
   const showAll = shallowRef(false)
 
   const visibleItems = computed(() => {

@@ -132,7 +132,10 @@ describe('useVisibleItems', () => {
 
     it('reacts to getter function source changes', () => {
       const count = ref(2)
-      const { visibleItems } = useVisibleItems(() => Array.from({ length: count.value }, (_, i) => i), 3)
+      const { visibleItems } = useVisibleItems(
+        () => Array.from({ length: count.value }, (_, i) => i),
+        3,
+      )
 
       expect(visibleItems.value).toEqual([0, 1])
 
