@@ -30,17 +30,17 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const isExpanded = shallowRef(false)
-const showAllKeywords = shallowRef(false)
 
 const filterText = computed({
   get: () => props.filters.text,
   set: value => emit('update:text', value),
 })
 
-const displayedKeywords = computed(() => {
-  const keywords = props.availableKeywords ?? []
-  return showAllKeywords.value ? keywords : keywords.slice(0, 20)
-})
+const {
+  visibleItems: displayedKeywords,
+  hasMore: hasMoreKeywords,
+  expand: expandKeywords,
+} = useVisibleItems(() => props.availableKeywords ?? [], 20)
 
 const searchPlaceholder = computed(() => {
   switch (props.filters.searchScope) {
@@ -55,10 +55,6 @@ const searchPlaceholder = computed(() => {
     default:
       return $t('filters.search_placeholder_name')
   }
-})
-
-const hasMoreKeywords = computed(() => {
-  return !showAllKeywords.value && (props.availableKeywords?.length ?? 0) > 20
 })
 
 // i18n mappings for filter options
@@ -337,7 +333,7 @@ const hasActiveFilters = computed(() => !!filterSummary.value)
               v-if="hasMoreKeywords"
               type="button"
               class="text-xs text-fg-subtle self-center font-mono hover:text-fg transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-fg focus-visible:ring-offset-1"
-              @click="showAllKeywords = true"
+              @click="expandKeywords"
             >
               {{ $t('filters.more_keywords', { count: (availableKeywords?.length ?? 0) - 20 }) }}
             </button>
