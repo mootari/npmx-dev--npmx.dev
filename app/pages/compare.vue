@@ -138,6 +138,11 @@ async function exportComparisonDataAsMarkdown() {
   await copy(markdown)
 }
 
+defineOgImageComponent('Compare', {
+  packages: () => packages.value,
+  emptyDescription: () => $t('compare.packages.meta_description_empty'),
+})
+
 const { announce } = useCommandPalette()
 
 useCommandPaletteContextCommands(
