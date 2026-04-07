@@ -5,6 +5,7 @@ import type {
   TimelineResponse,
   TimelineVersion,
 } from '~~/server/api/registry/timeline/[...pkg].get'
+import type { TimelineSizeResponse } from '~~/server/api/registry/timeline/sizes/[...pkg].get'
 
 definePageMeta({
   name: 'timeline',
@@ -81,13 +82,15 @@ watch(
 )
 
 async function loadMore() {
-  if (loadingMore.value || sizesLoading.value) return
+  if (loadingMore.value) return
   loadingMore.value = true
   loadError.value = false
   try {
-    const data = await fetchTimeline(timelineEntries.value.length)
+    const offset = timelineEntries.value.length
+    const data = await fetchTimeline(offset)
     timelineEntries.value = [...timelineEntries.value, ...data.versions]
     totalVersions.value = data.total
+    fetchSizes(offset)
   } catch {
     loadError.value = true
   } finally {
@@ -99,39 +102,40 @@ const SIZE_INCREASE_THRESHOLD = 0.25
 const DEP_INCREASE_THRESHOLD = 5
 const NO_LICENSE_VALUES = new Set(['', 'UNLICENSED'])
 
-const sizeCache = shallowReactive(new Map<string, InstallSizeResult>())
-const fetchingVersions = shallowReactive(new Set<string>())
-
-const sizesLoading = computed(() => fetchingVersions.size > 0)
+const sizeCache = shallowReactive(new Map<string, { totalSize: number; dependencyCount: number }>())
+const sizeFetchesInFlight = ref(0)
+const sizesLoading = computed(() => sizeFetchesInFlight.value > 0)
 
 function sizeKey(ver: string) {
   return `${packageName.value}@${ver}`
 }
 
-async function fetchSize(ver: string) {
-  const key = sizeKey(ver)
-  if (sizeCache.has(key) || fetchingVersions.has(key)) return
-  fetchingVersions.add(key)
+async function fetchSizes(offset: number) {
+  sizeFetchesInFlight.value++
   try {
-    const data = await $fetch<InstallSizeResult>(
-      `/api/registry/install-size/${packageName.value}/v/${ver}`,
+    const data = await $fetch<TimelineSizeResponse>(
+      `/api/registry/timeline/sizes/${packageName.value}`,
+      { query: { offset, limit: PAGE_SIZE } },
     )
-    sizeCache.set(key, data)
+    for (const entry of data.sizes) {
+      sizeCache.set(sizeKey(entry.version), {
+        totalSize: entry.totalSize,
+        dependencyCount: entry.dependencyCount,
+      })
+    }
   } catch {
     // silently skip - size data is best-effort
   } finally {
-    fetchingVersions.delete(key)
+    sizeFetchesInFlight.value--
   }
 }
 
-// Fetch sizes for visible versions
+// Fetch sizes for the initial page
 if (import.meta.client) {
   watch(
-    timelineEntries,
-    entries => {
-      for (const entry of entries) {
-        fetchSize(entry.version)
-      }
+    initialTimeline,
+    () => {
+      fetchSizes(0)
     },
     { immediate: true },
   )
@@ -322,6 +326,11 @@ useSeoMeta({
     />
 
     <div class="container w-full py-8">
+      <!-- Sizes loading indicator -->
+      <div v-if="sizesLoading" class="h-0.5 mb-4 rounded-full bg-bg-muted overflow-hidden">
+        <div class="h-full w-1/3 bg-accent rounded-full animate-indeterminate" />
+      </div>
+
       <!-- Timeline -->
       <ol v-if="timelineEntries.length" class="relative border-s border-border ms-4">
         <li v-for="entry in timelineEntries" :key="entry.version" class="mb-6 ms-6">
@@ -394,7 +403,7 @@ useSeoMeta({
         <button
           type="button"
           class="text-sm text-accent hover:text-accent/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="loadingMore || sizesLoading"
+          :disabled="loadingMore"
           @click="loadMore"
         >
           {{ $t('package.timeline.load_more') }}
@@ -418,3 +427,18 @@ useSeoMeta({
     </div>
   </main>
 </template>
+
+<style scoped>
+@keyframes indeterminate {
+  0% {
+    translate: -100%;
+  }
+  100% {
+    translate: 400%;
+  }
+}
+
+.animate-indeterminate {
+  animation: indeterminate 1.5s ease-in-out infinite;
+}
+</style>
