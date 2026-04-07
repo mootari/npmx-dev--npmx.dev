@@ -97,7 +97,7 @@ async function loadMore() {
 
 const SIZE_INCREASE_THRESHOLD = 0.25
 const DEP_INCREASE_THRESHOLD = 5
-const NO_LICENSE_VALUES = ['', 'UNLICENSED']
+const NO_LICENSE_VALUES = new Set(['', 'UNLICENSED'])
 
 const sizeCache = shallowReactive(new Map<string, InstallSizeResult>())
 const fetchingVersions = shallowReactive(new Set<string>())
@@ -216,8 +216,8 @@ const versionSubEvents = computed(() => {
     const currentLicense = current.license ?? 'Unknown'
     const previousLicense = previous.license ?? 'Unknown'
     if (currentLicense !== previousLicense) {
-      const hadNoLicense = NO_LICENSE_VALUES.includes(previousLicense)
-      const hasNoLicense = NO_LICENSE_VALUES.includes(currentLicense)
+      const hadNoLicense = NO_LICENSE_VALUES.has(previousLicense)
+      const hasNoLicense = NO_LICENSE_VALUES.has(currentLicense)
       events.push({
         key: 'license',
         positive: hadNoLicense && !hasNoLicense,
