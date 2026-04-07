@@ -1,7 +1,12 @@
 import type { StorybookConfig } from '@storybook-vue/nuxt'
 
 const config = {
-  stories: ['../.storybook/*.mdx', '../app/**/*.stories.@(js|ts)'],
+  stories: [
+    // List welcome first in sidebar
+    '../.storybook/docs/welcome.mdx',
+    '../.storybook/docs/*.mdx',
+    '../app/**/*.@(mdx|stories.@(js|ts))',
+  ],
   addons: [
     '@storybook/addon-a11y',
     '@storybook/addon-docs',
@@ -9,7 +14,7 @@ const config = {
     'storybook-i18n',
   ],
   framework: '@storybook-vue/nuxt',
-  staticDirs: ['./.public'],
+  staticDirs: ['./.public', { from: '../public', to: '/' }],
   features: {
     backgrounds: false,
   },

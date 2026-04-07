@@ -200,6 +200,26 @@ const {
 } = usePackage(packageName, () => resolvedVersion.value ?? requestedVersion.value)
 
 const { diff: sizeDiff } = useInstallSizeDiff(packageName, resolvedVersion, pkg, installSize)
+const { versions: commandPaletteVersions, ensureLoaded: ensureCommandPaletteVersionsLoaded } =
+  useCommandPalettePackageVersions(packageName)
+
+const commandPalettePackageContext = computed(() => {
+  const packageData = pkg.value
+  if (!packageData) return null
+
+  return {
+    packageName: packageData.name,
+    resolvedVersion: resolvedVersion.value ?? packageData['dist-tags']?.latest ?? null,
+    latestVersion: packageData['dist-tags']?.latest ?? null,
+    versions: commandPaletteVersions.value ?? Object.keys(packageData.versions ?? {}),
+    tarballUrl: packageData.requestedVersion?.dist.tarball ?? null,
+  }
+})
+
+useCommandPalettePackageContext(commandPalettePackageContext, {
+  onOpen: ensureCommandPaletteVersionsLoaded,
+})
+useCommandPalettePackageCommands(commandPalettePackageContext)
 
 // Detect two hydration scenarios where the external _payload.json is missing:
 //
@@ -257,7 +277,6 @@ const versionSecurityMetadata = computed<PackageVersionInfo[]>(() => {
 // Process package description
 const pkgDescription = useMarkdown(() => ({
   text: pkg.value?.description ?? '',
-  packageName: pkg.value?.name,
 }))
 
 // Fetch dependency analysis (lazy, client-side)
@@ -459,6 +478,8 @@ const canonicalUrl = computed(() => {
 const versionUrlPattern = computed(
   () => `/package/${pkg.value?.name || packageName.value}/v/{version}`,
 )
+
+useCommandPaletteVersionCommands(commandPalettePackageContext, versionUrlPattern)
 
 const dependencyCount = computed(() => getDependencyCount(displayVersion.value))
 
