@@ -367,7 +367,7 @@ useSeoMeta({
               class="mb-2 ms-4 relative last:mb-0"
             >
               <span
-                class="absolute -start-[calc(1rem+0.375rem)] top-0.5 flex items-center justify-center w-3 h-3 rounded-full border"
+                class="absolute -start-[1.375rem] top-0.5 flex items-center justify-center w-3 h-3 rounded-full border"
                 :class="
                   ev.positive ? 'bg-green-500 border-green-600' : 'bg-amber-500 border-amber-600'
                 "
