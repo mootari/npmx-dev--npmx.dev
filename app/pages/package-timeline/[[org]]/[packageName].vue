@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { RouteLocationRaw } from 'vue-router'
-import { compare } from 'semver'
+import { compare, major, prerelease } from 'semver'
 import type {
   TimelineResponse,
   TimelineVersion,
@@ -308,6 +308,22 @@ const versionSubEvents = computed(() => {
   return result
 })
 
+function majorGroup(ver: string): string {
+  const maj = major(ver)
+  return prerelease(ver) ? `${maj}-pre` : `${maj}`
+}
+
+function majorGroupColor(ver: string): string {
+  const maj = major(ver)
+  const isPre = prerelease(ver) !== null
+  // golden ratio magic
+  const step = (maj * 0.618034) % 1
+  const hue = 180 + step * 100
+  // 1-goldenRatio further magic
+  const lightness = 45 + ((maj * 0.381966) % 1) * 30
+  return `hsl(${hue} ${isPre ? '35%' : '60%'} ${lightness}%)`
+}
+
 useSeoMeta({
   title: () => `Timeline - ${packageName.value} - npmx`,
   description: () => `Version timeline for ${packageName.value}`,
@@ -337,7 +353,10 @@ useSeoMeta({
           <!-- Dot -->
           <span
             class="absolute -start-2 flex items-center justify-center w-4 h-4 rounded-full border border-border"
-            :class="entry.version === version ? 'bg-accent border-accent' : 'bg-bg-subtle'"
+            :class="
+              entry.version === version ? 'ring-2 ring-accent ring-offset-2 ring-offset-bg' : ''
+            "
+            :style="{ backgroundColor: majorGroupColor(entry.version) }"
           />
           <!-- Content -->
           <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
